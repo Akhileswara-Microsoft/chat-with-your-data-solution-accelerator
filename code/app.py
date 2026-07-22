@@ -1,5 +1,5 @@
 """
-This module contains the entry point for the application.
+This module contains the entry point for the application
 """
 
 import os
