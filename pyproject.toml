@@ -71,6 +71,17 @@ dependencies = [
 ]
 
 [dependency-groups]
+# Minimal set the azd post-provision hook (infra/scripts/post-provision/
+# post_provision.py) imports. The vscode_web sandbox syncs only this group
+# (`uv sync --only-group provision`) so it does not install the full runtime
+# graph just to run the post-deployment step. Versions mirror the direct
+# dependencies above; keep them in lockstep.
+provision = [
+    "httpx>=0.28,<1.0",
+    "psycopg2-binary>=2.9,<3.0",
+    "azure-identity>=1.25,<2.0",
+    "azure-search-documents>=11.6.0b1",
+]
 dev = [
     "pytest>=9.0,<10.0",
     "pytest-cov>=7.0,<8.0",
@@ -84,6 +95,11 @@ dev = [
     # cannot silently change the diagnostic surface between PRs.
     "pyright>=1.1.380,<2.0",
 ]
+
+[[tool.uv.index]]
+name = "microsoft"
+url = "https://packagefeedproxy.microsoft.io/pypi/simple"
+default = true
 
 [tool.uv]
 prerelease = "if-necessary-or-explicit"
@@ -104,6 +120,15 @@ prerelease = "if-necessary-or-explicit"
 #                              legacy loaders are not used here).
 #   idna, PyJWT, Soup Sieve, and Starlette are transitive dependencies with
 #   patched releases that remain compatible with their owning packages.
+#   azure-monitor-opentelemetry-exporter >= 1.0.0b51 and opentelemetry-sdk /
+#   -api < 1.41 — agent-framework-core==1.7.0 forces opentelemetry-api>=1.39,
+#                 but the older exporter b45 imports `LogData` from
+#                 `opentelemetry.sdk._logs`, removed in opentelemetry-sdk
+#                 1.39.0. An unconstrained resolve maxes the SDK to 1.44 and
+#                 backtracks to the broken b45, failing import at collection.
+#                 Floor the exporter to b51 (LogData-free, uses
+#                 ReadableLogRecord) and cap the SDK/API to the 1.40 line so
+#                 the resolver settles on the b51 + 1.40 pair.
 constraint-dependencies = [
     "urllib3>=2.7.0",
     "cryptography>=48.0.1",
@@ -113,6 +138,9 @@ constraint-dependencies = [
     "pyjwt>=2.13.0",
     "soupsieve>=2.8.4",
     "starlette>=1.3.1",
+    "azure-monitor-opentelemetry-exporter>=1.0.0b51",
+    "opentelemetry-sdk<1.41",
+    "opentelemetry-api<1.41",
 ]
 
 [tool.pytest.ini_options]
